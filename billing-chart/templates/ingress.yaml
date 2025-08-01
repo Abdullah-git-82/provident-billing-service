@@ -1,43 +1,23 @@
-{{- if .Values.ingress.enabled -}}
+# billing-chart/templates/ingress.yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ include "billing-chart.fullname" . }}
-  labels:
-    {{- include "billing-chart.labels" . | nindent 4 }}
-  {{- with .Values.ingress.annotations }}
+  name: billing-service-ingress
   annotations:
-    {{- toYaml . | nindent 4 }}
-  {{- end }}
+    # This tells Kubernetes that Kong should manage this Ingress
+    kubernetes.io/ingress.class: kong
+    # This applies our JWT plugin to all traffic coming through this Ingress
+    konghq.com/plugins: billing-jwt-validator
 spec:
-  {{- with .Values.ingress.className }}
-  ingressClassName: {{ . }}
-  {{- end }}
-  {{- if .Values.ingress.tls }}
-  tls:
-    {{- range .Values.ingress.tls }}
-    - hosts:
-        {{- range .hosts }}
-        - {{ . | quote }}
-        {{- end }}
-      secretName: {{ .secretName }}
-    {{- end }}
-  {{- end }}
   rules:
-    {{- range .Values.ingress.hosts }}
-    - host: {{ .host | quote }}
-      http:
-        paths:
-          {{- range .paths }}
-          - path: {{ .path }}
-            {{- with .pathType }}
-            pathType: {{ . }}
-            {{- end }}
-            backend:
-              service:
-                name: {{ include "billing-chart.fullname" $ }}
-                port:
-                  number: {{ $.Values.service.port }}
-          {{- end }}
-    {{- end }}
-{{- end }}
+  - http:
+      paths:
+      - path: /bills
+        pathType: Prefix
+        backend:
+          service:
+            # This must match the name of the service from your Helm chart's service.yaml
+            name: {{ include "billing-chart.fullname" . }}
+            port:
+              # This must match the port from your service.yaml
+              number: 80

@@ -1,0 +1,16 @@
+# billing-chart/templates/kong-jwt-plugin.yaml
+apiVersion: configuration.konghq.com/v1
+kind: KongPlugin
+metadata:
+  name: billing-jwt-validator
+  # IMPORTANT: This must be in the same namespace as Kong itself
+  namespace: kong 
+plugin: jwt
+config:
+  key_sets:
+  - name: provident-mutual-keys
+    issuer: http://keycloak.keycloak.svc.cluster.local/auth/realms/provident-mutual
+    protocol: openid-connect
+    # This tells Kong to look for the public key at Keycloak's OIDC discovery endpoint
+    config:
+      discovery_enabled: true
